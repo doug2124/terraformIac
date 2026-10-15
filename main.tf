@@ -1,6 +1,3 @@
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
-
 terraform {
   required_providers {
     aws = {
@@ -12,8 +9,6 @@ terraform {
 
 provider "aws" {
   region     = "ap-northeast-1"
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
 }
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -44,10 +39,12 @@ resource "aws_subnet" "private" {
   }
 }
 resource "aws_instance" "web" {
-  ami           = "ami-0990bd2af79bd53a7"
+  ami           = "ami-080e8910bf0f0e572"
   instance_type = "t3.micro"
 
   subnet_id = aws_subnet.private.id
+
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -88,6 +85,27 @@ resource "aws_security_group" "alb_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "ec2_sg" {
+  name        = "ec2-sg"
+  description = "Allow HTTP only from ALB"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "HTTP from ALB"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
   }
 
   egress {
