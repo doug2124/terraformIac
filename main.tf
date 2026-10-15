@@ -45,7 +45,7 @@ resource "aws_subnet" "private" {
 }
 resource "aws_instance" "web" {
   ami           = "ami-0990bd2af79bd53a7"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
   subnet_id = aws_subnet.private.id
 
