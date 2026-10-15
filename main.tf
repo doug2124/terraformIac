@@ -45,9 +45,18 @@ resource "aws_subnet" "private" {
 }
 resource "aws_instance" "web" {
   ami           = "ami-0990bd2af79bd53a7"
-  instance_type = "t3.micro"
+  instance_type = "t2.micro"
 
   subnet_id = aws_subnet.private.id
+
+  user_data = <<-EOF
+              #!/bin/bash
+              dnf update -y
+              dnf install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Hello from Terraform EC2!</h1>" > /var/www/html/index.html
+              EOF
 
   tags = {
     Name = "terraform-ec2"
